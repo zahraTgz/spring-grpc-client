@@ -1,0 +1,39 @@
+syntax = "proto3";
+option java_multiple_files = true;
+package com.isc.mcb.rpc.bse;
+
+
+message BasicInfoInput {
+    int64 id = 1;
+    int64 code = 2;
+    string name = 3;
+    string englishName=4;
+    bool isActive = 5;
+}
+
+message BasicInfoDataOutput{
+    int64 id = 1;
+    int64 code = 2;
+    string name = 3;
+    string englishName=4;
+    bool isActive = 5;
+}
+
+message BasicInfoDataOutputList{
+    repeated BasicInfoDataOutput items = 1;
+}
+
+message Output{
+    int64 errorCode=1;
+}
+
+service BasicInfoService {
+
+    rpc getBasicInfoById(BasicInfoInput) returns (BasicInfoDataOutput);
+
+    rpc insertBasicInfo(BasicInfoInput) returns (Output);
+
+    rpc getAllBasicInfo(BasicInfoInput) returns (BasicInfoDataOutputList);
+
+}
+
