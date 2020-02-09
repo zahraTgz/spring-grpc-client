@@ -20,15 +20,6 @@ public class ChannelGrpc extends ManagedChannel {
     @Value("${local.grpc.port}")
     private int PORT;
 
-    public static ManagedChannel channel;
-
-    @PostConstruct
-    public void setup() {
-        channel = ManagedChannelBuilder.forAddress(IN_PROCESS_SERVER_NAME, PORT)
-                .usePlaintext()
-                .build();
-    }
-
     public ChannelGrpc() {
     }
 
@@ -68,4 +59,7 @@ public class ChannelGrpc extends ManagedChannel {
         return false;
     }
 
+    public ManagedChannel getMyChannel1() {
+        return ManagedChannelBuilder.forAddress(IN_PROCESS_SERVER_NAME, PORT).usePlaintext().build();
+    }
 }

@@ -9,6 +9,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.isc.mcb.rpc.bse.*;
 import io.grpc.StatusRuntimeException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -21,9 +22,11 @@ import java.util.concurrent.ExecutionException;
 @Service
 public class BasicInfoRpc {
 
+    @Autowired
+    private ChannelGrpc channelGrpc;
 
     public BasicInfo getBasicInfoById(Long id) throws InternalSystemException {
-        BasicInfoServiceGrpc.BasicInfoServiceFutureStub stub = BasicInfoServiceGrpc.newFutureStub(ChannelGrpc.channel);
+        BasicInfoServiceGrpc.BasicInfoServiceFutureStub stub = BasicInfoServiceGrpc.newFutureStub(channelGrpc.getMyChannel1());
 
         BasicInfoInput info = BasicInfoInput.newBuilder()
                 .setId(id)
@@ -49,6 +52,7 @@ public class BasicInfoRpc {
         }, MoreExecutors.directExecutor());
         try {
             future.get();
+            channelGrpc.getMyChannel1().shutdown();
         } catch (ExecutionException e) {
             throw new InternalSystemException(e);
         } catch (InterruptedException e) {
@@ -59,7 +63,7 @@ public class BasicInfoRpc {
 
 
     public List<BasicInfo> getAllBasicInfo() {
-        BasicInfoServiceGrpc.BasicInfoServiceFutureStub stub = BasicInfoServiceGrpc.newFutureStub(ChannelGrpc.channel);
+        BasicInfoServiceGrpc.BasicInfoServiceFutureStub stub = BasicInfoServiceGrpc.newFutureStub(channelGrpc.getMyChannel1());
 
         BasicInfoInput info = BasicInfoInput.newBuilder()
                 .build();
@@ -90,11 +94,13 @@ public class BasicInfoRpc {
         }, MoreExecutors.directExecutor());
         try {
             future.get();
+
         } catch (ExecutionException e) {
             throw new InternalSystemException(e);
         } catch (InterruptedException e) {
             throw new InternalSystemException(e);
         }
+        channelGrpc.getMyChannel1().shutdown();
         return basicInfoList;
     }
 
@@ -107,7 +113,7 @@ public class BasicInfoRpc {
                 .setIsActive(basicInfo.getActive())
                 .build();
 
-        BasicInfoServiceGrpc.BasicInfoServiceFutureStub stub = BasicInfoServiceGrpc.newFutureStub(ChannelGrpc.channel);
+        BasicInfoServiceGrpc.BasicInfoServiceFutureStub stub = BasicInfoServiceGrpc.newFutureStub(channelGrpc.getMyChannel1());
 
         ListenableFuture<Output> future = stub.insertBasicInfo(info);
         final Integer[] resultCode = new Integer[1];
@@ -126,11 +132,13 @@ public class BasicInfoRpc {
         }, MoreExecutors.directExecutor());
         try {
             future.get();
+            channelGrpc.getMyChannel1().shutdown();
         } catch (ExecutionException e) {
             throw new InternalSystemException(e);
         } catch (InterruptedException e) {
             throw new InternalSystemException(e);
         }
+
         return resultCode[0];
     }
 
