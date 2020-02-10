@@ -7,9 +7,9 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  * @author z.Taghizadeh
  */
 @SpringBootApplication
-public class GrpcClientApplication {
+public class GRpcClientApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(GrpcClientApplication.class, args);
+        SpringApplication.run(GRpcClientApplication.class, args);
     }
 }

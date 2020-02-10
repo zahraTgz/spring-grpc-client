@@ -2,16 +2,18 @@ package com.example.grpcclient.service;
 
 import com.example.grpcclient.InternalSystemException;
 import com.example.grpcclient.model.BasicInfo;
-import com.example.grpcclient.util.ChannelGrpc;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.isc.mcb.rpc.bse.*;
+import io.grpc.ManagedChannel;
+import io.grpc.ManagedChannelBuilder;
 import io.grpc.StatusRuntimeException;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 
+import javax.annotation.PostConstruct;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -19,20 +21,34 @@ import java.util.concurrent.ExecutionException;
 /**
  * @author z.Taghizadeh
  */
-@Service
-public class BasicInfoRpc {
+@Component
+public class BasicInfoNonBlockingService {
 
-    @Autowired
-    private ChannelGrpc channelGrpc;
+    @Value("${local.grpc.in-process-server-name}")
+    private String IN_PROCESS_SERVER_NAME;
+
+    @Value("${local.grpc.port}")
+    private int PORT;
+
+    private BasicInfoServiceGrpc.BasicInfoServiceFutureStub nonBlockingStub;
+
+    private ManagedChannel managedChannel;
+
+
+    @PostConstruct
+    private void init() {
+        managedChannel = ManagedChannelBuilder
+                .forAddress(IN_PROCESS_SERVER_NAME, PORT).usePlaintext().build();
+
+        nonBlockingStub =
+                BasicInfoServiceGrpc.newFutureStub(managedChannel);
+    }
+
 
     public BasicInfo getBasicInfoById(Long id) throws InternalSystemException {
-        BasicInfoServiceGrpc.BasicInfoServiceFutureStub stub = BasicInfoServiceGrpc.newFutureStub(channelGrpc.getMyChannel1());
 
-        BasicInfoInput info = BasicInfoInput.newBuilder()
-                .setId(id)
-                .build();
-
-        ListenableFuture<BasicInfoDataOutput> future = stub.getBasicInfoById(info);
+        BasicInfoInput info = BasicInfoInput.newBuilder().setId(id).build();
+        ListenableFuture<BasicInfoDataOutput> future = nonBlockingStub.getBasicInfoById(info);
 
         BasicInfo basicInfo = new BasicInfo();
         Futures.addCallback(future, new FutureCallback<BasicInfoDataOutput>() {
@@ -52,10 +68,9 @@ public class BasicInfoRpc {
         }, MoreExecutors.directExecutor());
         try {
             future.get();
-            channelGrpc.getMyChannel1().shutdown();
-        } catch (ExecutionException e) {
-            throw new InternalSystemException(e);
-        } catch (InterruptedException e) {
+            managedChannel.shutdown();
+
+        } catch (ExecutionException | InterruptedException e) {
             throw new InternalSystemException(e);
         }
         return basicInfo;
@@ -63,12 +78,9 @@ public class BasicInfoRpc {
 
 
     public List<BasicInfo> getAllBasicInfo() {
-        BasicInfoServiceGrpc.BasicInfoServiceFutureStub stub = BasicInfoServiceGrpc.newFutureStub(channelGrpc.getMyChannel1());
 
-        BasicInfoInput info = BasicInfoInput.newBuilder()
-                .build();
-
-        ListenableFuture<BasicInfoDataOutputList> future = stub.getAllBasicInfo(info);
+        BasicInfoInput info = BasicInfoInput.newBuilder().build();
+        ListenableFuture<BasicInfoDataOutputList> future = nonBlockingStub.getAllBasicInfo(info);
 
         List<BasicInfo> basicInfoList = new ArrayList<>();
         Futures.addCallback(future, new FutureCallback<BasicInfoDataOutputList>() {
@@ -94,13 +106,10 @@ public class BasicInfoRpc {
         }, MoreExecutors.directExecutor());
         try {
             future.get();
-
-        } catch (ExecutionException e) {
-            throw new InternalSystemException(e);
-        } catch (InterruptedException e) {
+        } catch (ExecutionException | InterruptedException e) {
             throw new InternalSystemException(e);
         }
-        channelGrpc.getMyChannel1().shutdown();
+        managedChannel.shutdown();
         return basicInfoList;
     }
 
@@ -112,17 +121,14 @@ public class BasicInfoRpc {
                 .setEnglishName(basicInfo.getEnglishName())
                 .setIsActive(basicInfo.getActive())
                 .build();
+        ListenableFuture<Output> future = nonBlockingStub.insertBasicInfo(info);
 
-        BasicInfoServiceGrpc.BasicInfoServiceFutureStub stub = BasicInfoServiceGrpc.newFutureStub(channelGrpc.getMyChannel1());
-
-        ListenableFuture<Output> future = stub.insertBasicInfo(info);
         final Integer[] resultCode = new Integer[1];
         Futures.addCallback(future, new FutureCallback<Output>() {
 
             @Override
             public void onSuccess(Output result) {
                 resultCode[0] = ((int) result.getErrorCode());
-
             }
 
             @Override
@@ -132,15 +138,12 @@ public class BasicInfoRpc {
         }, MoreExecutors.directExecutor());
         try {
             future.get();
-            channelGrpc.getMyChannel1().shutdown();
-        } catch (ExecutionException e) {
-            throw new InternalSystemException(e);
-        } catch (InterruptedException e) {
+            managedChannel.shutdown();
+        } catch (ExecutionException | InterruptedException e) {
             throw new InternalSystemException(e);
         }
 
         return resultCode[0];
     }
-
 
 }

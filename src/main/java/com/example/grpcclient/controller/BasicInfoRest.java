@@ -2,7 +2,7 @@ package com.example.grpcclient.controller;
 
 
 import com.example.grpcclient.model.BasicInfo;
-import com.example.grpcclient.service.BasicInfoRpc;
+import com.example.grpcclient.service.BasicInfoNonBlockingService;
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,7 +22,7 @@ import java.util.List;
 public class BasicInfoRest {
 
     @Autowired
-    private BasicInfoRpc service;
+    private BasicInfoNonBlockingService service;
 
 
     @GetMapping(value = "/getById/{id}",
