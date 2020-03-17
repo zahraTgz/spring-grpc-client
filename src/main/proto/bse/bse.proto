@@ -24,7 +24,7 @@ message BasicInfoDataOutputList{
 }
 
 message Output{
-    int64 errorCode=1;
+    int64 id=1;
 }
 
 service BasicInfoService {
