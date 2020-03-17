@@ -10,6 +10,9 @@ import org.springframework.stereotype.Component;
 
 import java.util.concurrent.ExecutionException;
 
+/**
+ * @author z.Taghizadeh
+ */
 @Component
 public class BaseRpc<T> {
 
