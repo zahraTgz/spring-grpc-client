@@ -53,13 +53,12 @@ public class BasicInfoRest {
     public ResponseEntity<Object> handleException(Exception e) {
         String bodyOfResponse = "check console....";
 
-        if ((((e).getCause().getCause())) instanceof Exception) {
-            Status status = ((StatusRuntimeException) ((e).getCause().getCause()))
+        if ((((e).getCause().getCause().getCause())) instanceof StatusRuntimeException) {
+            Status status = ((StatusRuntimeException) ((e).getCause().getCause().getCause()))
                     .getStatus();
-            if (Status.INTERNAL.equals(status))
+            if (Status.INTERNAL.getCode().equals(status.getCode()))
                 bodyOfResponse = (status.getDescription());
         }
-
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(bodyOfResponse);
     }
 }
