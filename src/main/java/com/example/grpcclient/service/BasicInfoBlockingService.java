@@ -3,8 +3,8 @@ package com.example.grpcclient.service;
 import com.example.grpcclient.InternalSystemException;
 import com.example.grpcclient.mapper.BasicInfoMapper;
 import com.example.grpcclient.model.BasicInfo;
-import com.isc.mcb.rpc.bse.BasicInfoDataOutput;
-import com.isc.mcb.rpc.bse.BasicInfoInput;
+import com.google.protobuf.Int64Value;
+import com.isc.mcb.rpc.bse.BasicInfoMessage;
 import com.isc.mcb.rpc.bse.BasicInfoServiceGrpc;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
@@ -22,10 +22,10 @@ import javax.annotation.PostConstruct;
 public class BasicInfoBlockingService {
 
     @Value("${local.grpc.in-process-server-name}")
-    private String IN_PROCESS_SERVER_NAME;
+    private String inProcessServerName;
 
     @Value("${local.grpc.port}")
-    private int PORT;
+    private int port;
 
     private BasicInfoServiceGrpc.BasicInfoServiceBlockingStub blockingStub;
 
@@ -34,7 +34,7 @@ public class BasicInfoBlockingService {
     @PostConstruct
     private void init() {
         ManagedChannel managedChannel = ManagedChannelBuilder
-                .forAddress(IN_PROCESS_SERVER_NAME, PORT).usePlaintext().build();
+                .forAddress(inProcessServerName, port).usePlaintext().build();
 
         blockingStub =
                 BasicInfoServiceGrpc.newBlockingStub(managedChannel);
@@ -42,9 +42,8 @@ public class BasicInfoBlockingService {
 
     public BasicInfo getBasicInfoById(Long id) throws InternalSystemException {
         try {
-
-            BasicInfoInput info = BasicInfoInput.newBuilder().setId(id).build();
-            BasicInfoDataOutput result = blockingStub.getBasicInfoById(info);
+            Int64Value inputData = Int64Value.newBuilder().setValue(id).build();
+            BasicInfoMessage result = blockingStub.getBasicInfoById(inputData);
             return basicInfoMapper.fromBasicInfoDataOutput(result);
         } catch (Exception e) {
             throw new InternalSystemException(((StatusRuntimeException) e).getStatus().getDescription());

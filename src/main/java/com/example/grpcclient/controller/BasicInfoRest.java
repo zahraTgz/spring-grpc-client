@@ -27,7 +27,7 @@ public class BasicInfoRest {
 
     @GetMapping(value = "/getById/{id}",
             produces = MediaType.APPLICATION_JSON_VALUE)
-    public BasicInfo getByIdBasicInfo(@PathVariable Long id) throws Exception {
+    public BasicInfo getByIdBasicInfo(@PathVariable Long id) {
 
         return service.getBasicInfoById(id);
     }
@@ -35,7 +35,7 @@ public class BasicInfoRest {
 
     @GetMapping(value = "/getAll",
             produces = MediaType.APPLICATION_JSON_VALUE)
-    public List<BasicInfo> getAllBasicInfo() throws Exception {
+    public List<BasicInfo> getAllBasicInfo() {
 
         return service.getAllBasicInfo();
     }
@@ -43,9 +43,10 @@ public class BasicInfoRest {
 
     @PostMapping(value = "/save",
             consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Integer> insertToBasicInfo(@Valid @RequestBody BasicInfo basicInfo) {
+    public ResponseEntity<Void> insertToBasicInfo(@Valid @RequestBody BasicInfo basicInfo) {
+        service.saveBasicInfo(basicInfo);
+        return ResponseEntity.ok().build();
 
-        return ResponseEntity.ok(service.saveBasicInfo(basicInfo));
     }
 
 
@@ -53,7 +54,7 @@ public class BasicInfoRest {
     public ResponseEntity<Object> handleException(Exception e) {
         String bodyOfResponse = "check console....";
 
-        if ((((e).getCause().getCause().getCause())) instanceof StatusRuntimeException) {
+        if (((e).getCause().getCause().getCause()) instanceof StatusRuntimeException) {
             Status status = ((StatusRuntimeException) ((e).getCause().getCause().getCause()))
                     .getStatus();
             if (Status.INTERNAL.getCode().equals(status.getCode()))

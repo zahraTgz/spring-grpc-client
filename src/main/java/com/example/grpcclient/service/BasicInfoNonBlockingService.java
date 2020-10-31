@@ -4,7 +4,11 @@ import com.example.grpcclient.InternalSystemException;
 import com.example.grpcclient.mapper.BasicInfoMapper;
 import com.example.grpcclient.model.BasicInfo;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.isc.mcb.rpc.bse.*;
+import com.google.protobuf.Empty;
+import com.google.protobuf.Int64Value;
+import com.isc.mcb.rpc.bse.BasicInfoDataOutputList;
+import com.isc.mcb.rpc.bse.BasicInfoMessage;
+import com.isc.mcb.rpc.bse.BasicInfoServiceGrpc;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import org.mapstruct.factory.Mappers;
@@ -22,10 +26,10 @@ import java.util.List;
 public class BasicInfoNonBlockingService {
 
     @Value("${local.grpc.in-process-server-name}")
-    private String IN_PROCESS_SERVER_NAME;
+    private String inProcessServerName;
 
     @Value("${local.grpc.port}")
-    private int PORT;
+    private int port;
 
     private BasicInfoServiceGrpc.BasicInfoServiceFutureStub nonBlockingStub;
 
@@ -39,7 +43,7 @@ public class BasicInfoNonBlockingService {
     @PostConstruct
     private void init() {
         managedChannel = ManagedChannelBuilder
-                .forAddress(IN_PROCESS_SERVER_NAME, PORT).usePlaintext().build();
+                .forAddress(inProcessServerName, port).usePlaintext().build();
 
         nonBlockingStub =
                 BasicInfoServiceGrpc.newFutureStub(managedChannel);
@@ -48,22 +52,21 @@ public class BasicInfoNonBlockingService {
 
     public BasicInfo getBasicInfoById(Long id) throws InternalSystemException {
 
-        BasicInfoInput info = BasicInfoInput.newBuilder().setId(id).build();
-        ListenableFuture<BasicInfoDataOutput> future = nonBlockingStub.getBasicInfoById(info);
-        return basicInfoMapper.fromBasicInfoDataOutput((BasicInfoDataOutput) baseRpc.callBack(future, BasicInfoDataOutput.newBuilder().build()));
+        Int64Value inputData = Int64Value.newBuilder().setValue(id).build();
+        ListenableFuture<BasicInfoMessage> future = nonBlockingStub.getBasicInfoById(inputData);
+        return basicInfoMapper.fromBasicInfoDataOutput((BasicInfoMessage) baseRpc.callBack(future, BasicInfoMessage.newBuilder().build()));
     }
 
     public List<BasicInfo> getAllBasicInfo() {
 
-        BasicInfoInput info = BasicInfoInput.newBuilder().build();
-        ListenableFuture<BasicInfoDataOutputList> future = nonBlockingStub.getAllBasicInfo(info);
+        ListenableFuture<BasicInfoDataOutputList> future = nonBlockingStub.getAllBasicInfo(Empty.newBuilder().build());
         return basicInfoMapper.fromBasicInfoDataOutputList(((BasicInfoDataOutputList) baseRpc.callBack(future, BasicInfoDataOutputList.newBuilder().build())).getItemsList());
     }
 
-    public int saveBasicInfo(BasicInfo basicInfo) {
+    public void saveBasicInfo(BasicInfo basicInfo) {
 
-        ListenableFuture<Output> future = nonBlockingStub.insertBasicInfo(basicInfoMapper.fromBasicInfo(basicInfo));
-        return (int) ((Output) baseRpc.callBack(future, Output.newBuilder().build())).getId();
+        ListenableFuture<Empty> future = nonBlockingStub.insertBasicInfo(basicInfoMapper.fromBasicInfo(basicInfo));
+        baseRpc.callBack(future, Empty.newBuilder().build());
     }
 
 }
